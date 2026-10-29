@@ -46,9 +46,47 @@ Status legend: `[x]` done and verified, `[ ]` not done.
   CREATE DATABASE, schema load, 31 routes + users + 21607 demand rows, seed users all OK.
 - pytest run command: `backend\venv\Scripts\python.exe -m pytest` (from `backend/`).
 
+## Frontend build (current phase)
+
+- [x] Step 8: Flutter Web scaffold (`frontend/`): Provider, `http`, GoRouter,
+      `shared_preferences`. One API config (`lib/config.dart`), HTTP client with JWT
+      (`lib/services/api_client.dart`), auth state (`lib/state/auth_state.dart`),
+      Login/Register screens, role-based GoRouter guards (`lib/router.dart`).
+- [x] Step 9: Passenger dashboard (searchable barangay picker, live waiting/driver
+      counts, Join Queue, ticket number / passengers ahead / status, View, Cancel) and
+      driver dashboard (select route, join, position, waiting/on_deck status, Complete
+      Trip, Leave Queue). Both poll every 3 seconds.
+- [x] Step 10: Admin screens: dashboard cards + ML demand list, Manage Drivers
+      (add/edit/deactivate/reactivate), Manage Routes (add/rename/disable/enable),
+      Queue Monitoring per barangay, and skip/remove dialog with required reason code.
+- [x] Step 11: Public no-login board at `/public` with per-barangay drivers in queue,
+      passengers waiting, demand level, search, and driver-list dialog.
+- [x] Step 12: Verification (real output below) + README commands + manual UI checklist.
+
+## Frontend verification evidence (real, not claimed)
+
+- `cd frontend; flutter analyze` -> **`No issues found! (ran in 27.2s)`**.
+- `cd frontend; flutter test` -> **`5 passed, 2 skipped`** (the 2 skipped are the
+  opt-in live API tests).
+- `flutter test --dart-define=LIVE_API=true test/live_api_test.dart` -> **`2 passed`**.
+  It logs in as admin, driver, and passenger through the real API, calls `/api/auth/me`,
+  and checks 31 routes, admin dashboard, admin queues, and the public board.
+- `flutter run -d chrome --web-port=5000 --web-hostname=127.0.0.1` -> compiled, opened
+  Chrome with title **ParkKeys**, and served <http://127.0.0.1:5000> (HTTP 200).
+  GoRouter hash routes were observed for `/login`, `/public`, `/admin`, and `/driver`.
+- `flutter build web --release --dart-define=API_BASE_URL=http://127.0.0.1:8000` ->
+  **`√ Built build\web`** (release bundle compiles).
+- During the live Chrome session, `audit_logs` recorded real UI actions:
+  passenger `queue_join` on Caasinan (19:15:48), driver `queue_join` (19:16:46),
+  four `queue_status` updates, and `queue_serve` (19:17:10).
+- Widget tests cover the login form wiring for all 3 roles and empty-field validation.
+
 ## Notes
 - Real DB used for verification: project-local PostgreSQL cluster on port **5433**
   (`.pgdata/`, gitignored) because the system PostgreSQL password was unavailable.
   The app does not depend on 5433; update `DATABASE_URL` for your own server.
 - Test DB is `parkkeys_test` (auto-created). Tests never touch `parkkeys_db`.
-- Frontend (Flutter Web) is **not built yet**; `frontend/` holds a placeholder only.
+- Frontend: API base URL defaults to `http://127.0.0.1:8000`; override with
+  `--dart-define=API_BASE_URL=...`. JWT is kept in browser localStorage for reloads.
+  No backend changes were needed for the frontend.
+

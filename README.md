@@ -1,8 +1,8 @@
 # ParkKeys
 
 Barangay-based tricycle queue management system for Cabadbaran City.
-This repository currently contains the **backend** (FastAPI + PostgreSQL + scikit-learn).
-The Flutter Web frontend will be added in the next phase.
+This repository contains the **backend** (FastAPI + PostgreSQL + scikit-learn) and the
+**Flutter Web frontend** (`frontend/`).
 
 Spec: [`AGENTS.md`](AGENTS.md) | Assumptions: [`docs/ASSUMPTIONS.md`](docs/ASSUMPTIONS.md) | Progress: [`docs/PROGRESS.md`](docs/PROGRESS.md)
 
@@ -13,13 +13,15 @@ Spec: [`AGENTS.md`](AGENTS.md) | Assumptions: [`docs/ASSUMPTIONS.md`](docs/ASSUM
 | `backend/` | FastAPI app, seed scripts, pytest suite |
 | `database/` | `schema.sql`, `seed_data.sql` |
 | `docs/` | assumptions and progress log |
-| `frontend/` | placeholder for Flutter Web |
+| `frontend/` | Flutter Web app (Provider + GoRouter + polling REST client) |
 
 ## Prerequisites
 
 - Python 3.11+ (verified on Python 3.12)
 - PostgreSQL 15+ (verified on PostgreSQL 18)
 - `psql` on PATH
+- Flutter 3.47+ stable (verified on Flutter 3.47.4 / Dart 3.13.3)
+- Google Chrome (for `flutter run -d chrome`)
 - Git
 
 ## 1. Create and load the database
@@ -96,7 +98,60 @@ Flutter never connects to PostgreSQL and never receives DB/JWT secrets.
 
 Passwords are hashed with the `bcrypt` package directly, cost 12.
 
-## 3. Run the tests
+## 3. Run the Flutter Web frontend
+
+Keep the backend running on port 8000, then:
+
+```powershell
+cd frontend
+flutter pub get
+flutter run -d chrome --web-port=5000 --dart-define=API_BASE_URL=http://127.0.0.1:8000
+```
+
+Open <http://127.0.0.1:5000>. The API URL defaults to `http://127.0.0.1:8000`,
+so `--dart-define` is optional. For a deployed API:
+
+```powershell
+flutter build web --release --dart-define=API_BASE_URL=https://your-api.example.com
+```
+
+The static build is in `frontend/build/web` (serve it from any static host).
+
+Frontend structure:
+
+| File | Purpose |
+| --- | --- |
+| `lib/config.dart` | API base URL + 3-second poll interval |
+| `lib/services/api_client.dart` | HTTP wrapper, attaches JWT, API error messages |
+| `lib/state/auth_state.dart` | login/register/logout, token restore, role home |
+| `lib/router.dart` | GoRouter routes + role guards |
+| `lib/screens/` | login, register, passenger, driver, admin, public board |
+| `lib/widgets/` | polling mixin, shared responsive widgets |
+
+Notes:
+
+- JWT is saved in browser `localStorage` via `shared_preferences`; reload keeps login.
+- Every screen polls the API every 3 seconds. No WebSocket.
+- GoRouter guards hide the wrong dashboard, but the backend still enforces roles.
+- Admin pages: `/admin`, `/admin/drivers`, `/admin/routes`, `/admin/queues`.
+- Public no-login board: `/public`.
+
+### Frontend checks
+
+```powershell
+cd frontend
+flutter analyze
+flutter test
+```
+
+Optional live test against the running backend (verifies login for all 3 seeded roles,
+the admin dashboard, and the public board):
+
+```powershell
+flutter test --dart-define=LIVE_API=true test/live_api_test.dart
+```
+
+## 4. Run the tests
 
 The suite creates a **separate** `_test` database (it refuses names that do not end in `_test`).
 By default it derives `parkkeys_test` from `DATABASE_URL`.
@@ -194,10 +249,39 @@ Missing or invalid reason returns **422** before any database change.
 11. Passenger token on `/api/admin/dashboard` -> **403**.
 12. `GET /api/admin/predictions` -> 31 rows with LOW/MEDIUM/HIGH.
 
+## Manual UI checklist (Flutter Web)
+
+1. Open <http://127.0.0.1:5000/public> (or click **View public queue board**).
+   You should see all 31 barangays with live passenger/driver counts and demand chips,
+   with no login. Tap a card to see the driver list.
+2. Login as `passenger1@parkkeys.com` / `Passenger123!`.
+   Search and select a barangay, click **Join Queue**, and confirm the queue number,
+   passengers ahead, and status. Wait 3 seconds -> counts update automatically.
+   Open **View** for details, then **Cancel Queue**.
+3. Login as `driver1@parkkeys.com` / `Driver123!`.
+   Select the same route and **Join Driver Queue**. Check position and queue number.
+   Toggle **On deck**, and use **Complete Trip** when position is 1 and a passenger waits.
+4. Login as `admin@parkkeys.com` / `Admin123!`.
+   Check the four dashboard cards (total drivers, active drivers, passengers served today,
+   active queues) and the ML demand list. Then:
+   - **Drivers**: add, edit, deactivate, reactivate a driver.
+   - **Routes**: add, rename, disable, re-enable a barangay.
+   - **Queues**: open a barangay, then **Skip** or **Remove** an entry.
+     Submitting without a reason must be blocked; the reason codes are
+     `no_show`, `vehicle_issue`, `driver_request`, `other`.
+5. Logout. While logged in as a passenger, open `/admin` in the URL bar ->
+   the guard sends you back to `/passenger`.
+6. Resize the window from 360px to 1920px: navigation switches between bottom bar
+   and side rail, cards reflow, and no horizontal scrolling appears.
+
 ## Troubleshooting
 
 - **`psql: password authentication failed`** -> set the real password in `.env`
   and use `$env:PGPASSWORD` for commands.
 - **`bcrypt` install error on Windows** -> use Python 3.12 x64 and upgrade pip.
-- **Port 8000 busy** -> `uvicorn app.main:app --port 8001`.
+- **Port 8000 busy** -> `uvicorn app.main:app --port 8001` and run Flutter with
+  `--dart-define=API_BASE_URL=http://127.0.0.1:8001`.
+- **Flutter shows "Cannot reach the API"** -> check the backend URL and that CORS allows
+  the Flutter origin (`CORS_ORIGINS=*` is fine for the demo).
+- **Port 5000 busy** -> use another `--web-port`.
 - **Tests create `parkkeys_test`** -> expected; they never touch `parkkeys_db`.

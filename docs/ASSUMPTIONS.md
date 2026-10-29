@@ -13,3 +13,8 @@ Simple choices made when the spec was silent. Keep this list updated.
 9. **Local verification DB.** The system PostgreSQL password was unknown, so a second PostgreSQL cluster was initialized at `.pgdata/` on port **5433** for real pytest runs. The code is normal and works with the documented 5432 setup too.
 10. **No pagination.** Queues and 31 routes are small; endpoints return full lists. Keeps the student demo simple.
 11. **Timestamps** are stored with timezone (`TIMESTAMPTZ`). Business dates for reports use the server's date in Asia/Manila? Reports use `CURRENT_DATE` of the DB server; noted for the demo.
+12. **Frontend token storage.** The JWT is saved in the browser's `localStorage` (through `shared_preferences`) so a page reload keeps the session. Logout clears it. No DB credentials or JWT secret ever exist in the Flutter app.
+13. **Admin dashboard cards.** "Total drivers" comes from `GET /api/admin/drivers`. The spec asks for "passengers today"; the backend exposes `completed_today` (passengers served today) and `cancelled_today`, so the card is labelled **Passengers served today** to stay truthful to real data. No fake count was added.
+14. **Driver "Complete Trip".** The frontend button calls the existing `POST /api/queue/driver/serve`; it is enabled only when the driver is position 1 and passengers are waiting, matching the backend rule.
+15. **Public board.** It uses only `/api/public/routes` and `/api/public/routes/{id}/status` and does not send a token. This keeps the no-login page working even when not logged in.
+16. **No backend changes.** The Flutter frontend was built against the existing endpoints; no backend bug blocked it.
