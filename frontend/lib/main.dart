@@ -64,23 +64,30 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: ParkKeysColors.canvas,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.electric_rickshaw,
-              size: 64,
-              color: theme.colorScheme.primary,
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: ParkKeysColors.yellow,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Icon(
+                Icons.electric_rickshaw,
+                size: 42,
+                color: ParkKeysColors.ink,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               'ParkKeys',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.primary,
+              style: ParkKeysText.textTheme.headlineMedium?.copyWith(
+                color: ParkKeysColors.green,
               ),
             ),
             const SizedBox(height: 20),

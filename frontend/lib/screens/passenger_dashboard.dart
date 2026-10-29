@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/api_client.dart';
 import '../state/auth_state.dart';
+import '../theme.dart';
 import '../widgets/barangay_picker.dart';
 import '../widgets/common.dart';
 import '../widgets/polling.dart';
@@ -150,9 +151,9 @@ class _PassengerDashboardState extends State<PassengerDashboard>
             ),
             InfoRow(label: 'Joined', value: formatDateTime(entry.joinedAt)),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Mag-update kini every 3 seconds samtang bukas ang page.',
-              style: TextStyle(fontSize: 12),
+              style: ParkKeysText.textTheme.bodySmall,
             ),
           ],
         ),
@@ -186,11 +187,9 @@ class _PassengerDashboardState extends State<PassengerDashboard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              PageHeader(
-                title: 'Hello, $firstName',
-                subtitle: _entry == null
-                    ? 'Asa ka gusto moadto?'
-                    : 'Naa kay aktibo nga queue entry.',
+              _PassengerHero(
+                firstName: firstName,
+                inQueue: _entry != null,
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
@@ -198,7 +197,7 @@ class _PassengerDashboardState extends State<PassengerDashboard>
               ],
               const SizedBox(height: 16),
               if (_loading)
-                const LoadingView()
+                const LoadingView(message: 'Loading your queue...')
               else if (_entry != null)
                 _EntrySection(
                   entry: _entry!,
@@ -227,6 +226,58 @@ class _PassengerDashboardState extends State<PassengerDashboard>
   }
 }
 
+class _PassengerHero extends StatelessWidget {
+  const _PassengerHero({required this.firstName, required this.inQueue});
+
+  final String firstName;
+  final bool inQueue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      decoration: BoxDecoration(
+        color: ParkKeysColors.greenDark,
+        borderRadius: BorderRadius.circular(ParkKeysRadii.card),
+      ),
+      child: Row(
+        children: [
+          const BrandIconWell(
+            icon: Icons.electric_rickshaw,
+            size: 52,
+            iconSize: 28,
+            background: ParkKeysColors.yellow,
+            foreground: ParkKeysColors.ink,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hello, $firstName',
+                  style: ParkKeysText.textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  inQueue
+                      ? 'Naa kay aktibo nga queue entry.'
+                      : 'Asa ka gusto moadto?',
+                  style: ParkKeysText.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.86),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _JoinSection extends StatelessWidget {
   const _JoinSection({
     required this.routes,
@@ -246,7 +297,6 @@ class _JoinSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -255,30 +305,35 @@ class _JoinSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.search, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
+                const BrandIconWell(icon: Icons.map_outlined),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Where do you want to go?',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: ParkKeysText.textTheme.titleLarge,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               'Pilia ang barangay destination, dayon join sa passenger queue.',
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+              style: ParkKeysText.textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            BarangayPickerField(
-              routes: routes,
-              value: selected,
-              onChanged: onSelect,
-              enabled: !joining,
-            ),
+            if (routes.isEmpty)
+              const EmptyState(
+                icon: Icons.place_outlined,
+                title: 'No barangay available',
+                message: 'Wala pa kay pwedeng i-join nga route karon.',
+              )
+            else
+              BarangayPickerField(
+                routes: routes,
+                value: selected,
+                onChanged: onSelect,
+                enabled: !joining,
+              ),
             if (selected != null) ...[
               const SizedBox(height: 16),
               _LiveRouteSummary(name: selected!.name, status: status),
@@ -290,7 +345,10 @@ class _JoinSection extends StatelessWidget {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.queue),
               label: Text(joining ? 'Joining...' : 'Join Queue'),
@@ -298,9 +356,7 @@ class _JoinSection extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'Tagaan ka namo og queue number ug makita nimo pila ka pasahero ang naa sa unahan.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: ParkKeysText.textTheme.bodySmall,
             ),
           ],
         ),
@@ -326,50 +382,48 @@ class _EntrySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final wide = constraints.maxWidth >= 620;
-                final ticket = Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'YOUR QUEUE NUMBER',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        letterSpacing: 1.2,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    Text(
-                      '#${entry.queueNumber}',
-                      style: theme.textTheme.displayMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.primary,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              Container(height: 8, color: ParkKeysColors.yellow),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= 620;
+                    final ticket = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        StatusChip(entry.status),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            entry.routeName,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                        Text(
+                          'YOUR QUEUE NUMBER',
+                          style: ParkKeysText.textTheme.labelSmall,
+                        ),
+                        Text(
+                          '#${entry.queueNumber}',
+                          style: ParkKeysText.textTheme.displayMedium?.copyWith(
+                            color: ParkKeysColors.green,
                           ),
                         ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            StatusChip(entry.status),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                entry.routeName,
+                                overflow: TextOverflow.ellipsis,
+                                style: ParkKeysText.textTheme.titleSmall,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
-                    ),
-                  ],
-                );
+                    );
 
                 final metrics = Wrap(
                   spacing: 12,
@@ -398,21 +452,27 @@ class _EntrySection extends StatelessWidget {
                   ],
                 );
 
-                return wide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 2, child: ticket),
-                          const SizedBox(width: 20),
-                          Expanded(flex: 3, child: metrics),
-                        ],
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [ticket, const SizedBox(height: 16), metrics],
-                      );
-              },
-            ),
+                    return wide
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 2, child: ticket),
+                              const SizedBox(width: 20),
+                              Expanded(flex: 3, child: metrics),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ticket,
+                              const SizedBox(height: 16),
+                              metrics,
+                            ],
+                          );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -426,33 +486,49 @@ class _EntrySection extends StatelessWidget {
                   _LiveRouteSummary(name: entry.routeName, status: status),
                   const SizedBox(height: 12),
                 ],
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: onView,
-                        icon: const Icon(Icons.visibility_outlined),
-                        label: const Text('View'),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final stacked = constraints.maxWidth < 400;
+                    final viewBtn = OutlinedButton.icon(
+                      onPressed: onView,
+                      icon: const Icon(Icons.visibility_outlined),
+                      label: const Text('View'),
+                    );
+                    final cancelBtn = FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: ParkKeysColors.removed,
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: theme.colorScheme.error,
-                        ),
-                        onPressed: cancelling ? null : onCancel,
-                        icon: cancelling
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.close),
-                        label: const Text('Cancel Queue'),
-                      ),
-                    ),
-                  ],
+                      onPressed: cancelling ? null : onCancel,
+                      icon: cancelling
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.close),
+                      label: const Text('Cancel Queue'),
+                    );
+                    if (stacked) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          viewBtn,
+                          const SizedBox(height: 8),
+                          cancelBtn,
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: viewBtn),
+                        const SizedBox(width: 10),
+                        Expanded(child: cancelBtn),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -471,26 +547,22 @@ class _LiveRouteSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final data = status;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(12),
+        color: ParkKeysColors.greenSoft,
+        borderRadius: BorderRadius.circular(ParkKeysRadii.control),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.place, size: 18),
+              const Icon(Icons.place, size: 18, color: ParkKeysColors.green),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  name,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
+                child: Text(name, style: ParkKeysText.textTheme.titleSmall),
               ),
               if (data != null) DemandChip(data.route.demandLevel),
             ],
@@ -502,8 +574,12 @@ class _LiveRouteSummary extends StatelessWidget {
             children: [
               Text(
                 'Passengers waiting: ${data?.route.passengersWaiting ?? '…'}',
+                style: ParkKeysText.textTheme.bodyMedium,
               ),
-              Text('Drivers in queue: ${data?.route.driversInQueue ?? '…'}'),
+              Text(
+                'Drivers in queue: ${data?.route.driversInQueue ?? '…'}',
+                style: ParkKeysText.textTheme.bodyMedium,
+              ),
             ],
           ),
         ],
@@ -525,31 +601,21 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       width: 150,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(12),
+        color: ParkKeysColors.canvas,
+        border: Border.all(color: ParkKeysColors.line),
+        borderRadius: BorderRadius.circular(ParkKeysRadii.control),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          Icon(icon, size: 18, color: ParkKeysColors.green),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+          Text(value, style: ParkKeysText.textTheme.titleMedium),
+          Text(label, style: ParkKeysText.textTheme.bodySmall),
         ],
       ),
     );

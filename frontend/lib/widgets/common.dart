@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../state/auth_state.dart';
+import '../theme.dart';
 
 /// Center content, max width para dili stretched kaayo sa 1920px.
 class ResponsiveBody extends StatelessWidget {
@@ -62,14 +63,11 @@ class AppShell extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(title, style: ParkKeysText.textTheme.titleMedium),
             if (subtitle != null)
               Text(
                 subtitle!,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: ParkKeysText.textTheme.bodySmall,
               ),
           ],
         ),
@@ -173,9 +171,7 @@ class PageHeader extends StatelessWidget {
           children: [
             Text(
               title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: theme.textTheme.headlineSmall,
             ),
             if (subtitle != null) ...[
               const SizedBox(height: 4),
@@ -304,29 +300,28 @@ class StatusChip extends StatelessWidget {
   };
 
   static const _colors = {
-    'waiting': Color(0xFF1565C0),
-    'on_deck': Color(0xFFEF6C00),
-    'completed': Color(0xFF2E7D32),
-    'cancelled': Color(0xFF616161),
-    'skipped': Color(0xFF6A1B9A),
-    'removed': Color(0xFFC62828),
+    'waiting': ParkKeysColors.waiting,
+    'on_deck': ParkKeysColors.onDeck,
+    'completed': ParkKeysColors.completed,
+    'cancelled': ParkKeysColors.cancelled,
+    'skipped': ParkKeysColors.skipped,
+    'removed': ParkKeysColors.removed,
   };
 
   @override
   Widget build(BuildContext context) {
-    final color = _colors[status] ?? Colors.blueGrey;
+    final color = _colors[status] ?? ParkKeysColors.muted;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(ParkKeysRadii.chip),
       ),
       child: Text(
         _labels[status] ?? status,
-        style: TextStyle(
+        style: ParkKeysText.textTheme.labelSmall?.copyWith(
           color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
         ),
       ),
     );
@@ -341,15 +336,15 @@ class DemandChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (level) {
-      'HIGH' => const Color(0xFFC62828),
-      'MEDIUM' => const Color(0xFFEF6C00),
-      _ => const Color(0xFF2E7D32),
+      'HIGH' => ParkKeysColors.demandHigh,
+      'MEDIUM' => ParkKeysColors.demandMedium,
+      _ => ParkKeysColors.demandLow,
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(ParkKeysRadii.chip),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -358,10 +353,9 @@ class DemandChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '$level demand',
-            style: TextStyle(
+            style: ParkKeysText.textTheme.labelSmall?.copyWith(
               color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
             ),
           ),
         ],
@@ -384,7 +378,7 @@ class ErrorBanner extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(ParkKeysRadii.control),
       ),
       child: Row(
         children: [
@@ -449,14 +443,33 @@ class EmptyState extends StatelessWidget {
 }
 
 class LoadingView extends StatelessWidget {
-  const LoadingView({super.key});
+  const LoadingView({super.key, this.message});
+
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(40),
-        child: CircularProgressIndicator(),
+        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BrandIconWell(
+              icon: Icons.electric_rickshaw,
+              size: 56,
+              iconSize: 28,
+              background: ParkKeysColors.yellowSoft,
+              foreground: ParkKeysColors.ink,
+            ),
+            const SizedBox(height: 16),
+            const CircularProgressIndicator(),
+            if (message != null) ...[
+              const SizedBox(height: 12),
+              Text(message!, style: ParkKeysText.textTheme.bodySmall),
+            ],
+          ],
+        ),
       ),
     );
   }
