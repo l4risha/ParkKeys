@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'screens/driver_dashboard.dart';
 import 'screens/login_screen.dart';
+import 'screens/passenger_dashboard.dart';
 import 'screens/register_screen.dart';
 import 'state/auth_state.dart';
 
-/// GoRouter + role-based guards. Public board walay login.
+/// GoRouter + role-based guards.
 GoRouter buildRouter(AuthState auth) {
   return GoRouter(
     initialLocation: '/login',
@@ -25,6 +27,14 @@ GoRouter buildRouter(AuthState auth) {
 
       // Naka-login na: ayaw na ipakita ang login/register.
       if (isAuthPage || location == '/') return auth.homePath;
+
+      // Role guard per section. Backend gihapon ang final check.
+      if (location.startsWith('/passenger') && auth.role != 'passenger') {
+        return auth.homePath;
+      }
+      if (location.startsWith('/driver') && auth.role != 'driver') {
+        return auth.homePath;
+      }
       return null;
     },
     routes: [
@@ -35,6 +45,14 @@ GoRouter buildRouter(AuthState auth) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/passenger',
+        builder: (context, state) => const PassengerDashboard(),
+      ),
+      GoRoute(
+        path: '/driver',
+        builder: (context, state) => const DriverDashboard(),
       ),
     ],
     errorBuilder: (context, state) => const _NotFoundScreen(),
