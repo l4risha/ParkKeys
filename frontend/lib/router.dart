@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'screens/admin/admin_dashboard.dart';
+import 'screens/admin/manage_drivers.dart';
+import 'screens/admin/manage_routes.dart';
+import 'screens/admin/queue_monitoring.dart';
 import 'screens/driver_dashboard.dart';
 import 'screens/login_screen.dart';
 import 'screens/passenger_dashboard.dart';
@@ -35,6 +39,9 @@ GoRouter buildRouter(AuthState auth) {
       if (location.startsWith('/driver') && auth.role != 'driver') {
         return auth.homePath;
       }
+      if (location.startsWith('/admin') && auth.role != 'admin') {
+        return auth.homePath;
+      }
       return null;
     },
     routes: [
@@ -53,6 +60,30 @@ GoRouter buildRouter(AuthState auth) {
       GoRoute(
         path: '/driver',
         builder: (context, state) => const DriverDashboard(),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/admin/drivers',
+        builder: (context, state) => const ManageDriversScreen(),
+      ),
+      GoRoute(
+        path: '/admin/routes',
+        builder: (context, state) => const ManageRoutesScreen(),
+      ),
+      GoRoute(
+        path: '/admin/queues',
+        builder: (context, state) => const QueueMonitoringScreen(),
+      ),
+      GoRoute(
+        path: '/admin/queues/:id',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+          if (id == null) return const _NotFoundScreen();
+          return QueueDetailScreen(routeId: id);
+        },
       ),
     ],
     errorBuilder: (context, state) => const _NotFoundScreen(),
