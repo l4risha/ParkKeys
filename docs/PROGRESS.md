@@ -42,6 +42,8 @@ Status legend: `[x]` done and verified, `[ ]` not done.
   health 200, `/docs` 200, OpenAPI 25 paths, passenger join 201 (ticket 1),
   duplicate join 409, driver join 201, serve 200, skip without reason 422,
   skip with reason 200, wrong role 403, public routes 200 without login.
+- `scripts/setup_db.ps1` was run against a fresh database name:
+  CREATE DATABASE, schema load, 31 routes + users + 21607 demand rows, seed users all OK.
 - pytest run command: `backend\venv\Scripts\python.exe -m pytest` (from `backend/`).
 
 ## Notes
