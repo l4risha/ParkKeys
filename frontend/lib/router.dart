@@ -9,6 +9,7 @@ import 'screens/admin/queue_monitoring.dart';
 import 'screens/driver_dashboard.dart';
 import 'screens/login_screen.dart';
 import 'screens/passenger_dashboard.dart';
+import 'screens/public_status_screen.dart';
 import 'screens/register_screen.dart';
 import 'state/auth_state.dart';
 
@@ -23,9 +24,10 @@ GoRouter buildRouter(AuthState auth) {
 
       final location = state.matchedLocation;
       final isAuthPage = location == '/login' || location == '/register';
+      final isPublic = location == '/public';
 
       if (!auth.isAuthenticated) {
-        if (isAuthPage) return null;
+        if (isAuthPage || isPublic) return null;
         return '/login';
       }
 
@@ -52,6 +54,10 @@ GoRouter buildRouter(AuthState auth) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/public',
+        builder: (context, state) => const PublicStatusScreen(),
       ),
       GoRoute(
         path: '/passenger',
