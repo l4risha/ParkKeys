@@ -18,7 +18,9 @@ function Invoke-Psql([string[]]$PsqlArgs) {
 }
 
 Write-Host "==> Creating database $DbName (if missing)"
-$exists = (& $psql -U $DbUser -h $DbHost -p $Port -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DbName'").Trim()
+$exists = & $psql -U $DbUser -h $DbHost -p $Port -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$DbName'"
+if ($LASTEXITCODE -ne 0) { throw "Could not query PostgreSQL. Check credentials/host/port." }
+$exists = "$exists".Trim()
 if ($exists -ne "1") {
     Invoke-Psql @("-d", "postgres", "-c", "CREATE DATABASE $DbName;")
 }
