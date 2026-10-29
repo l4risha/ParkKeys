@@ -48,6 +48,7 @@ app.include_router(admin.router)
 app.include_router(public.router)
 
 
+@app.get("/health", tags=["health"])
 @app.get("/api/health", tags=["health"])
 def health(conn=Depends(get_db)):
     conn.execute("SELECT 1")

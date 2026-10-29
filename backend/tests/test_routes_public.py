@@ -9,6 +9,13 @@ EXPECTED_BARANGAYS = {
 } | {f"Poblacion {n}" for n in range(1, 13)}
 
 
+def test_health_endpoints(client):
+    for path in ("/health", "/api/health"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
+
+
 def test_exactly_31_unique_barangays(client, auth):
     response = client.get("/api/admin/routes", headers=auth("admin@parkkeys.com"))
     assert response.status_code == 200

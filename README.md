@@ -79,7 +79,7 @@ uvicorn app.main:app --reload --port 8000
 
 - Swagger UI: <http://127.0.0.1:8000/docs>
 - OpenAPI JSON: <http://127.0.0.1:8000/openapi.json>
-- Health: <http://127.0.0.1:8000/api/health>
+- Health: <http://127.0.0.1:8000/health> (also available at `/api/health`)
 
 CORS is enabled (`CORS_ORIGINS=*` by default) so Flutter Web can call the API.
 Flutter never connects to PostgreSQL and never receives DB/JWT secrets.
